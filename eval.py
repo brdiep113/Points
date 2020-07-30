@@ -1,5 +1,5 @@
 import torch
-import tqdm
+from tqdm import tqdm
 from utils.loss import dice_coeff
 
 def eval_net(net, loader, device):

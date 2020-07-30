@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 import torch.nn as nn
 from tqdm import tqdm
-from utils.dataloader import PointDataset
+from dataloader import PointDataset
 from torch.utils.data import DataLoader, random_split
 from eval import eval_net
 
@@ -13,10 +13,11 @@ import logging
 import os
 
 
-def train_net(net, val_percent=0.1, batch_size=128, lr=0.001, epochs=5, save_cp=True):
-    dataset = PointDataset()
+def train_net(net, val_percent=0.1, batch_size=16, lr=0.001, epochs=100, save_cp=True):
+    dataset = PointDataset('.')
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
+    print(len(dataset))
     train, val = random_split(dataset, [n_train, n_val])
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
@@ -53,7 +54,7 @@ def train_net(net, val_percent=0.1, batch_size=128, lr=0.001, epochs=5, save_cp=
                 location_pred = net(imgs)
 
                 loss = location_loss(location_pred, location_target)
-                epoch_loss += loss.item() * img.size(0)
+                epoch_loss += loss.item() * imgs.size(0)
 
                 pbar.set_postfix(**{'loss (batch)': loss.item()})
 
@@ -74,12 +75,9 @@ def train_net(net, val_percent=0.1, batch_size=128, lr=0.001, epochs=5, save_cp=
                     scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
-                    if net.n_classes > 1:
-                        logging.info('Validation cross entropy: {}'.format(val_score))
-                        writer.add_scalar('Loss/test', val_score, global_step)
-                    else:
-                        logging.info('Validation Dice Coeff: {}'.format(val_score))
-                        writer.add_scalar('Dice/test', val_score, global_step)
+
+                    logging.info('Validation Dice Coeff: {}'.format(val_score))
+                    writer.add_scalar('Dice/test', val_score, global_step)
 
                     writer.add_images('images', imgs, global_step)
                     writer.add_images('location/true', location_target, global_step)
