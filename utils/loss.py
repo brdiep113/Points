@@ -2,9 +2,11 @@ import torch.nn as nn
 import torch
 from torch.autograd import Function
 
+
 def location_loss(location_pred, location_target):
     loss = nn.BCEWithLogitsLoss()
-    return loss(location_pred, location_target)
+    weight_rebalance = torch.ones_like(location_target) / 100.0 + (1.0 - 1.0 / 100.0) * location_target
+    return loss(location_pred, location_target, weight=weight_rebalance)
 
 
 class DiceCoeff(Function):
