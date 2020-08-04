@@ -1,6 +1,6 @@
 import torch
 from network.model import PointDetectorNet
-from utils.loss import location_loss
+from utils.loss import location_loss, jaccard_loss
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 import torch.nn as nn
@@ -13,19 +13,17 @@ import logging
 import os
 
 
-def train_net(net, val_percent=0.1, batch_size=16, lr=0.001, epochs=100, save_cp=True):
+def train_net(net, val_percent=0.1, batch_size=32, lr=0.00001, epochs=100, save_cp=True):
     dataset = PointDataset('.')
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
-    print(len(dataset))
     train, val = random_split(dataset, [n_train, n_val])
     train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
     val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
-
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10)
 
-    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}')
+    writer = SummaryWriter(comment=f'Epochs_{epochs}_LR_{lr}_BS_{batch_size}')
     global_step = 0
 
     logging.info(f'''Starting training:

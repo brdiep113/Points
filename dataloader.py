@@ -30,8 +30,10 @@ class PointDataset(Dataset):
         self.transforms = transforms
         # get the images list
         self.image_list = glob.glob(root_path + '/Image/' + '*')
+        self.image_list.sort()
         # get the points list
         self.point_list = glob.glob(root_path + '/Point_Location/' + '*')
+        self.point_list.sort()
 
         # calculate length
         self.dataset_length = len(self.image_list)
